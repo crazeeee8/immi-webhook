@@ -147,26 +147,31 @@ app.post('/webhook/tally', (req, res) => {
 
 app.get('/', (_req, res) => res.json({ status: 'ok', service: 'immi-vault-generator', tg_token_set: !!TG_TOKEN }));
 
-// Smoke test — hits Telegram directly and returns the raw result
+// Smoke test — return token prefix + Telegram result
 app.get('/test-tg', (_req, res) => {
-  if (!TG_TOKEN) return res.status(500).json({ error: 'TELEGRAM_BOT_TOKEN not set', tg_token_set: false });
-  const body = JSON.stringify({ chat_id: TG_CHAT, text: 'Immi webhook Railway test' });
-  const tgReq = https.request({
-    hostname: 'api.telegram.org',
-    path: `/bot${TG_TOKEN}/sendMessage`,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
-  }, (r) => {
-    let data = '';
-    r.on('data', c => data += c);
-    r.on('end', () => {
-      try { res.json(JSON.parse(data)); }
-      catch (e) { res.status(500).json({ raw: data, parse_error: e.message }); }
+  try {
+    const tokenPreview = TG_TOKEN ? TG_TOKEN.slice(0, 10) + '...' : 'NOT SET';
+    if (!TG_TOKEN) return res.json({ ok: false, error: 'no token', tokenPreview });
+    const body = JSON.stringify({ chat_id: TG_CHAT, text: 'Immi webhook Railway test' });
+    const tgReq = https.request({
+      hostname: 'api.telegram.org',
+      path: `/bot${TG_TOKEN}/sendMessage`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
+    }, (r) => {
+      let data = '';
+      r.on('data', c => data += c);
+      r.on('end', () => {
+        try { res.json({ tokenPreview, tg: JSON.parse(data) }); }
+        catch (e) { res.json({ tokenPreview, raw: data, parse_error: e.message }); }
+      });
     });
-  });
-  tgReq.on('error', e => res.status(500).json({ network_error: e.message }));
-  tgReq.write(body);
-  tgReq.end();
+    tgReq.on('error', e => res.json({ tokenPreview, network_error: e.message }));
+    tgReq.write(body);
+    tgReq.end();
+  } catch (e) {
+    res.json({ sync_error: e.message });
+  }
 });
 
 app.listen(PORT, () => {
