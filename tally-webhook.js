@@ -38,6 +38,35 @@ function tgNotify(text) {
   req.end();
 }
 
+// Send zip file directly to Telegram so it's accessible from Railway's ephemeral FS
+function tgSendZip(zipPath, caption) {
+  if (!TG_TOKEN) return;
+  return new Promise((resolve) => {
+    const fileData = fs.readFileSync(zipPath);
+    const filename = path.basename(zipPath);
+    const boundary = `----FormBoundary${Date.now()}`;
+    const captionPart = `--${boundary}\r\nContent-Disposition: form-data; name="caption"\r\n\r\n${caption}\r\n`;
+    const chatPart   = `--${boundary}\r\nContent-Disposition: form-data; name="chat_id"\r\n\r\n${TG_CHAT}\r\n`;
+    const filePart   = `--${boundary}\r\nContent-Disposition: form-data; name="document"; filename="${filename}"\r\nContent-Type: application/zip\r\n\r\n`;
+    const closing    = `\r\n--${boundary}--\r\n`;
+    const body = Buffer.concat([
+      Buffer.from(captionPart + chatPart + filePart),
+      fileData,
+      Buffer.from(closing),
+    ]);
+    const req = https.request({
+      hostname: 'api.telegram.org',
+      path: `/bot${TG_TOKEN}/sendDocument`,
+      method: 'POST',
+      headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}`, 'Content-Length': body.length },
+    });
+    req.on('error', resolve);
+    req.on('response', resolve);
+    req.write(body);
+    req.end();
+  });
+}
+
 app.use(express.json());
 
 // ── Field label → answers key ─────────────────────────────────────────────
@@ -91,20 +120,20 @@ app.post('/webhook/tally', (req, res) => {
       const answers = parsePayload(req.body);
       const zipPath = await generate(answers, { zip: true, outBase: __dirname });
 
+      // Send zip to Telegram first — Railway FS is ephemeral
+      await tgSendZip(zipPath, `🟢 New Immi vault\nName: ${answers.first_name}\nEmail: ${answers.email || '(no email)'}\n\nDownload ↑ · email to customer · reply SENT when done`);
+
       const entry = {
         ts:         new Date().toISOString(),
         responseId,
         name:       answers.first_name,
         email:      answers.email || '(no email)',
-        zipPath,
         status:     'PENDING',
       };
       fs.appendFileSync(QUEUE, JSON.stringify(entry) + '\n');
 
-      tgNotify(`🟢 <b>New Immi vault request</b>\nName: ${answers.first_name}\nEmail: ${answers.email}\nVault: ${zipPath}\n\nAction: send zip, mark SENT in delivery-queue.jsonl`);
       console.log(`\n✓ ${answers.first_name} (${answers.email})`);
-      console.log(`  Vault: ${zipPath}`);
-      console.log(`  Action: send zip to customer, then mark SENT in delivery-queue.jsonl\n`);
+      console.log(`  Zip sent to Telegram — email to customer\n`);
 
     } catch (err) {
       console.error(`\n✗ Failed [${responseId}]:`, err.message);
