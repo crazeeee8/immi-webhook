@@ -147,26 +147,26 @@ app.post('/webhook/tally', (req, res) => {
 
 app.get('/', (_req, res) => res.json({ status: 'ok', service: 'immi-vault-generator', tg_token_set: !!TG_TOKEN }));
 
-// Smoke test — hits Telegram directly and returns the result
-app.get('/test-tg', async (_req, res) => {
-  if (!TG_TOKEN) return res.status(500).json({ error: 'TELEGRAM_BOT_TOKEN not set' });
-  const body = JSON.stringify({ chat_id: TG_CHAT, text: 'Immi webhook Railway test ✓' });
-  const result = await new Promise((resolve) => {
-    const req = https.request({
-      hostname: 'api.telegram.org',
-      path: `/bot${TG_TOKEN}/sendMessage`,
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
-    }, (r) => {
-      let data = '';
-      r.on('data', c => data += c);
-      r.on('end', () => resolve(JSON.parse(data)));
+// Smoke test — hits Telegram directly and returns the raw result
+app.get('/test-tg', (_req, res) => {
+  if (!TG_TOKEN) return res.status(500).json({ error: 'TELEGRAM_BOT_TOKEN not set', tg_token_set: false });
+  const body = JSON.stringify({ chat_id: TG_CHAT, text: 'Immi webhook Railway test' });
+  const tgReq = https.request({
+    hostname: 'api.telegram.org',
+    path: `/bot${TG_TOKEN}/sendMessage`,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
+  }, (r) => {
+    let data = '';
+    r.on('data', c => data += c);
+    r.on('end', () => {
+      try { res.json(JSON.parse(data)); }
+      catch (e) { res.status(500).json({ raw: data, parse_error: e.message }); }
     });
-    req.on('error', e => resolve({ error: e.message }));
-    req.write(body);
-    req.end();
   });
-  res.json(result);
+  tgReq.on('error', e => res.status(500).json({ network_error: e.message }));
+  tgReq.write(body);
+  tgReq.end();
 });
 
 app.listen(PORT, () => {
