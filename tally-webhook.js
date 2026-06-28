@@ -21,7 +21,7 @@ const { generate }   = require('./generate');
 const app      = express();
 const PORT     = process.env.PORT || 3000;
 const QUEUE    = path.join(__dirname, 'delivery-queue.jsonl');
-const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TG_TOKEN = (process.env.TELEGRAM_BOT_TOKEN || '').trim();
 const TG_CHAT  = '6540751763';
 
 function tgNotify(text) {
