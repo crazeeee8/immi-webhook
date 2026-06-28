@@ -1,0 +1,19 @@
+{
+  "_meta": {
+    "source": "IMMI-SIGNAL ICP research — composite of Amazing_Rope_4626 + Academic_Dot_8970 (r/ObsidianMD)",
+    "persona": "Lane 2 — Technical Power User",
+    "signals_detected": ["pkm-user", "ai-pain", "multi-ai-user", "knowledge-worker"],
+    "generated": "2026-06-27"
+  },
+  "first_name": "Alex",
+  "q1_role": "Product Lead at a 50-person B2B SaaS startup (post-PMF, Series A). I own the platform product that serves operations teams. Day-to-day: roadmap planning, cross-functional alignment, customer discovery, shipping with a team of 3 engineers.",
+  "q2_goals": "1. Ship Q3 platform roadmap (3 major features) by end of September\n2. Standardise how our team uses AI across the company — currently everyone is doing their own thing\n3. Hire 2 senior engineers by August without compromising culture",
+  "q3_ai_tools": ["Claude", "ChatGPT"],
+  "q4_reexplain": "Every single conversation I have to explain: I'm a product lead at a B2B SaaS startup, 50 people, Series A, we serve operations teams, I manage 3 engineers, we're mid-Q3 with specific deadlines. It takes 3 minutes before the AI is actually useful. Multiply that by 8 conversations a day.",
+  "q5_principles": "1. Build what you can measure — if you can't track it, don't build it\n2. Async-first: decisions in writing, not in meetings\n3. Strong opinions, loosely held — change your mind when the data changes",
+  "q6_projects": "- Q3 Platform Roadmap: bulk operations feature (ships July), API v2 (ships August), reporting module (ships September)\n- Hiring pipeline: 2 senior engineers, currently 3 candidates in final round\n- Company AI adoption: evaluating Claude Team vs departmental rollout\n- Customer research: 6 discovery interviews scheduled for July",
+  "q7_people": "co-founder (CEO, I report to her, she sets company strategy), 3 engineers I manage (frontend, backend, full-stack), 2 PMs I collaborate with on roadmap, designer I work with daily, VP Sales who is my main internal stakeholder, 3 enterprise clients in operations/logistics who are my primary research contacts",
+  "q8_decisions": "1. Claude Team vs phased department rollout — need to decide by July 15\n2. Bulk operations architecture — sync vs async processing, affects Q3 timeline significantly\n3. Whether to promote the backend engineer to tech lead (he's ready, but we need backfill first)",
+  "q9_never_assume": "Do not assume I want to move fast and break things — I value deliberate, reversible decisions\nDo not assume enterprise means slow — my clients want speed and have told me so\nDo not treat me as a solo founder — I operate in a team context where buy-in matters",
+  "q10_routines": "Morning: 20 min deep work block before Slack (protects thinking time)\nWeekly: Friday async retro with team\nDecision-making: write a 1-pager before any significant decision — forces clarity"
+}

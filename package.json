@@ -1,0 +1,12 @@
+{
+  "name": "immi-vault-generator",
+  "version": "1.0.0",
+  "main": "tally-webhook.js",
+  "scripts": {
+    "start": "node tally-webhook.js"
+  },
+  "dependencies": {
+    "archiver": "^5.3.2",
+    "express": "^5.2.1"
+  }
+}
