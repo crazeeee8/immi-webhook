@@ -121,7 +121,22 @@ app.post('/webhook/tally', (req, res) => {
       const zipPath = await generate(answers, { zip: true, outBase: __dirname });
 
       // Send zip to Telegram first — Railway FS is ephemeral
-      await tgSendZip(zipPath, `🟢 New Immi vault\nName: ${answers.first_name}\nEmail: ${answers.email || '(no email)'}\n\nDownload ↑ · email to customer · reply SENT when done`);
+      await tgSendZip(zipPath, `NEW IMMI VAULT\nName: ${answers.first_name}\nEmail: ${answers.email || '(no email)'}\n\nVault attached above. Email to customer using template below.`);
+
+      // Send customer email draft
+      tgNotify(`EMAIL DRAFT — ${answers.first_name} (${answers.email || 'no email'})\n\n` +
+`Hi ${answers.first_name},\n\n` +
+`Your Immi context file is ready — see the ZIP above.\n\n` +
+`HOW TO USE IT NOW\n` +
+`Open the ZIP → find immi/context-notes/work.md (or health/decisions) → paste it at the start of any Claude or ChatGPT conversation. Your AI immediately knows who you are. No Obsidian required yet.\n\n` +
+`This is the manual version of what the Immi plugin will do automatically with one click. You just experienced the core of what we're building.\n\n` +
+`WANT THE PLUGIN WHEN IT LAUNCHES?\n` +
+`Pro subscribers get early access + first-month discount.\n` +
+`→ Save your spot: https://crazeeee8.github.io/immi/\n\n` +
+`WANT THE FULL SETUP?\n` +
+`The $250 session covers: vault + AI memory migration + Claude Code + Remote Kuato (Claude on Telegram that knows you). Reply to this email if interested.\n\n` +
+`— GLOCK\n\n` +
+`────\nReply SENT when emailed.`);
 
       const entry = {
         ts:         new Date().toISOString(),
@@ -141,6 +156,33 @@ app.post('/webhook/tally', (req, res) => {
       fs.appendFileSync(QUEUE, JSON.stringify({
         ts: new Date().toISOString(), responseId, status: 'ERROR', error: err.message,
       }) + '\n');
+    }
+  });
+});
+
+// ── Pro waitlist webhook ──────────────────────────────────────────────────
+// Wire the Tally waitlist form (RGgLGj) to POST /webhook/waitlist in Tally settings.
+app.post('/webhook/waitlist', (req, res) => {
+  res.status(200).json({ ok: true });
+  setImmediate(() => {
+    try {
+      const fields = req.body?.data?.fields || [];
+      const emailField = fields.find(f => /email/i.test(f.label || ''));
+      const email = (Array.isArray(emailField?.value) ? emailField.value[0] : emailField?.value) || '(no email)';
+      const responseId = req.body?.data?.responseId || `waitlist-${Date.now()}`;
+
+      const entry = { ts: new Date().toISOString(), responseId, email, type: 'WAITLIST' };
+      fs.appendFileSync(QUEUE, JSON.stringify(entry) + '\n');
+
+      const count = fs.readFileSync(QUEUE, 'utf8').split('\n')
+        .filter(Boolean)
+        .filter(l => { try { return JSON.parse(l).type === 'WAITLIST'; } catch { return false; } })
+        .length;
+
+      tgNotify(`🟣 Pro waitlist signup #${count}\nEmail: ${email}`);
+      console.log(`\n✓ Waitlist signup #${count}: ${email}\n`);
+    } catch (err) {
+      console.error('Waitlist webhook error:', err.message);
     }
   });
 });
